@@ -12,17 +12,14 @@ export function fmtClock(ms) {
   return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 }
 
-/** 12.5h — aggregate readout */
-export function fmtHours(ms, digits = 1) {
-  const h = ms / HOUR;
-  const v = h.toFixed(h >= 100 ? 0 : digits);
-  return `${v.replace(/\.0$/, '')}h`;
+/** h:mm:ss — aggregate readout */
+export function fmtHours(ms) {
+  return fmtClock(ms);
 }
 
-/** h:mm — durations in entry lists */
+/** h:mm:ss — durations in entry lists */
 export function fmtDur(ms) {
-  const m = Math.round(ms / 60000);
-  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+  return fmtClock(ms);
 }
 
 export function fmtTime(ts) {
