@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { init, data, settings } from './lib/store.svelte.js';
+  import { initCloudBackup } from './lib/cloudbackup.svelte.js';
   import { route } from './lib/router.svelte.js';
   import TabBar from './components/TabBar.svelte';
   import Home from './views/Home.svelte';
@@ -11,6 +12,7 @@
   import ProjectDetail from './views/ProjectDetail.svelte';
 
   onMount(init);
+  initCloudBackup();
 
   // Apply the theme whenever the setting changes.
   $effect(() => {

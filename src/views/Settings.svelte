@@ -1,6 +1,7 @@
 <script>
   /** Theme, language, daily goal, exports, backup, danger zone. */
   import { settings, saveSetting, data, exportBackup, importBackup, eraseAll } from '../lib/store.svelte.js';
+  import { cloud, connect, disconnect, backupNow, restoreNow } from '../lib/cloudbackup.svelte.js';
   import { buildRows, exportCSV, exportXLSX, exportPDF } from '../lib/export.js';
   import { toDateInput, fromInputs, DAY } from '../lib/time.js';
   import { t } from '../lib/i18n.svelte.js';
@@ -56,6 +57,42 @@
 
   function erase() {
     if (confirm(t('eraseConfirm'))) eraseAll();
+  }
+
+  /* --- cloud backup --- */
+  let tokenInput = $state('');
+  let cloudBusy = $state(false);
+  let cloudMsg = $state('');
+
+  async function doConnect() {
+    cloudBusy = true;
+    cloudMsg = '';
+    try {
+      const { hasBackup } = await connect(tokenInput.trim());
+      tokenInput = '';
+      if (hasBackup && confirm(t('restoreConfirm'))) {
+        await restoreNow();
+        cloudMsg = t('restoreDone');
+      } else {
+        await backupNow();
+      }
+    } catch {
+      cloudMsg = t('invalidToken');
+    }
+    cloudBusy = false;
+  }
+
+  async function doRestore() {
+    if (!confirm(t('restoreConfirm'))) return;
+    cloudBusy = true;
+    cloudMsg = '';
+    try {
+      await restoreNow();
+      cloudMsg = t('restoreDone');
+    } catch (err) {
+      cloudMsg = String(err.message || err);
+    }
+    cloudBusy = false;
   }
 </script>
 
@@ -131,6 +168,34 @@
     </div>
   </div>
 
+  <div class="card sec">
+    <p class="label-caps head">{t('cloudBackup')}</p>
+    {#if cloud.enabled}
+      <p class="cloud-status" class:err={cloud.status === 'error'}>
+        {#if cloud.status === 'saving'}{t('backupSaving')}
+        {:else if cloud.status === 'offline'}{t('backupOffline')}
+        {:else if cloud.status === 'error'}{t('backupError')}: {cloud.error}
+        {:else}{t('lastBackup')}: {cloud.lastBackup ? new Date(cloud.lastBackup).toLocaleString() : t('neverBackedUp')}{/if}
+      </p>
+      <div class="exp-btns">
+        <button class="btn btn-ghost" disabled={cloudBusy} onclick={() => backupNow()}>{t('backupNow')}</button>
+        <button class="btn btn-ghost" disabled={cloudBusy} onclick={doRestore}>{t('restoreCloud')}</button>
+        <button class="btn btn-ghost" disabled={cloudBusy} onclick={disconnect}>{t('disconnect')}</button>
+      </div>
+    {:else}
+      <p class="cloud-info">{t('cloudInfo')}</p>
+      <div class="field">
+        <label for="cb-token">{t('cloudToken')}</label>
+        <input
+          id="cb-token" type="password" bind:value={tokenInput}
+          placeholder="github_pat_…" autocomplete="off" autocapitalize="off" spellcheck="false"
+        />
+      </div>
+      <button class="btn btn-accent" disabled={!tokenInput.trim() || cloudBusy} onclick={doConnect}>{t('connect')}</button>
+    {/if}
+    {#if cloudMsg}<p class="cloud-msg">{cloudMsg}</p>{/if}
+  </div>
+
   <div class="card sec danger">
     <p class="label-caps head">{t('dangerZone')}</p>
     <button class="btn btn-danger" onclick={erase}>{t('eraseAll')}</button>
@@ -196,6 +261,10 @@
   .switch:checked::after { transform: translateX(18px); }
 
   .exp-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  .cloud-info, .cloud-status, .cloud-msg { font-size: 13.5px; color: var(--text-2); margin: 0 0 14px; }
+  .cloud-msg { margin: 12px 0 0; }
+  .cloud-status.err { color: var(--danger); }
+  .field { margin-bottom: 14px; }
   .danger { border-color: color-mix(in srgb, var(--danger) 35%, var(--border)); }
   .about { text-align: center; color: var(--text-3); font-size: 12.5px; margin-top: 20px; }
 </style>

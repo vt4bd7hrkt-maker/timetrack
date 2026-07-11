@@ -4,6 +4,7 @@
    * start/stop, long press for the action sheet.
    */
   import { data, clock, setArchived } from '../lib/store.svelte.js';
+  import { go } from '../lib/router.svelte.js';
   import { startOfDay, endOfDay, overlapMs, fmtHours, HOUR } from '../lib/time.js';
   import { t } from '../lib/i18n.svelte.js';
   import ProjectCard from '../components/ProjectCard.svelte';
@@ -74,6 +75,9 @@
 
   {#if active.length === 0}
     <p class="empty">{t('addProjectFirst')}</p>
+    {#if data.projects.length === 0 && data.entries.length === 0}
+      <button class="restore-link" onclick={() => go('settings')}>{t('restoreFromBackup')}</button>
+    {/if}
   {:else}
     {#each active as p (p.id)}
       <ProjectCard project={p} onmenu={openMenu} />
@@ -163,4 +167,13 @@
   .menu button span { width: 22px; text-align: center; color: var(--accent); }
   .menu button.warn { color: var(--danger); }
   .menu button.warn span { color: var(--danger); }
+
+  .restore-link {
+    display: block;
+    margin: 4px auto 0;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+  }
 </style>

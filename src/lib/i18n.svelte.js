@@ -35,7 +35,16 @@ const dict = {
     invalidRange: 'End must be after start', hours: 'h', from: 'From', to: 'To',
     reminderTitle: 'Timer still running', reminderBody: 'has been running for over',
     longRunReminder: 'Reminder for long-running timers', goalReached: 'Daily goal',
-    statsFor: 'Stats', showArchived: 'Show archived', name: 'Name', total: 'Total'
+    statsFor: 'Stats', showArchived: 'Show archived', name: 'Name', total: 'Total',
+    cloudBackup: 'Automatic cloud backup',
+    cloudInfo: 'Backs up all data to your private GitHub repository a few seconds after every change. Paste your backup key to enable it.',
+    cloudToken: 'Backup key', connect: 'Connect', disconnect: 'Disconnect',
+    backupNow: 'Back up now', restoreCloud: 'Restore from cloud',
+    lastBackup: 'Last backup', neverBackedUp: 'no backup yet',
+    backupSaving: 'Backing up…', backupOffline: 'Offline — will back up when online',
+    backupError: 'Backup failed', invalidToken: 'Key not valid — check it and try again',
+    restoreConfirm: 'Restore the cloud backup into this app? Existing data is merged, nothing is lost.',
+    restoreDone: 'Backup restored', restoreFromBackup: 'Restore from cloud backup'
   },
   de: {
     home: 'Home', projects: 'Projekte', stats: 'Statistik', calendar: 'Kalender', settings: 'Einstellungen',
@@ -66,7 +75,16 @@ const dict = {
     editEntry: 'Eintrag bearbeiten', running: 'Läuft', addProjectFirst: 'Lege ein Projekt an, um zu starten',
     invalidRange: 'Ende muss nach dem Start liegen', hours: 'h', from: 'Von', to: 'Bis',
     reminderTitle: 'Timer läuft noch', reminderBody: 'läuft seit über', longRunReminder: 'Erinnerung bei langen Timern',
-    goalReached: 'Tagesziel', statsFor: 'Statistik', showArchived: 'Archivierte anzeigen', name: 'Name', total: 'Gesamt'
+    goalReached: 'Tagesziel', statsFor: 'Statistik', showArchived: 'Archivierte anzeigen', name: 'Name', total: 'Gesamt',
+    cloudBackup: 'Automatisches Cloud-Backup',
+    cloudInfo: 'Sichert alle Daten wenige Sekunden nach jeder Änderung in dein privates GitHub-Repository. Füge deinen Backup-Schlüssel ein, um es zu aktivieren.',
+    cloudToken: 'Backup-Schlüssel', connect: 'Verbinden', disconnect: 'Trennen',
+    backupNow: 'Jetzt sichern', restoreCloud: 'Aus Cloud wiederherstellen',
+    lastBackup: 'Letztes Backup', neverBackedUp: 'noch kein Backup',
+    backupSaving: 'Sichert…', backupOffline: 'Offline — wird nachgeholt',
+    backupError: 'Backup fehlgeschlagen', invalidToken: 'Schlüssel ungültig — bitte prüfen und erneut versuchen',
+    restoreConfirm: 'Cloud-Backup in diese App zurückspielen? Vorhandene Daten werden zusammengeführt, nichts geht verloren.',
+    restoreDone: 'Backup wiederhergestellt', restoreFromBackup: 'Aus Cloud-Backup wiederherstellen'
   }
 };
 
