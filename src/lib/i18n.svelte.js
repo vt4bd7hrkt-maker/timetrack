@@ -44,7 +44,10 @@ const dict = {
     backupSaving: 'Backing up…', backupOffline: 'Offline — will back up when online',
     backupError: 'Backup failed', invalidToken: 'Key not valid — check it and try again',
     restoreConfirm: 'Restore the cloud backup into this app? Existing data is merged, nothing is lost.',
-    restoreDone: 'Backup restored', restoreFromBackup: 'Restore from cloud backup'
+    restoreDone: 'Backup restored', restoreFromBackup: 'Restore from cloud backup',
+    tokenBad: 'GitHub does not recognize this key. It may be incomplete (copy the whole github_pat_… string) or expired.',
+    tokenNoAccess: 'The key works, but has no access to the backup repository. When creating it, choose "Only select repositories" → timetrack-backup, and set Contents to "Read and write".',
+    tokenNetwork: 'Could not reach GitHub — check your internet connection and try again.'
   },
   de: {
     home: 'Home', projects: 'Projekte', stats: 'Statistik', calendar: 'Kalender', settings: 'Einstellungen',
@@ -84,7 +87,10 @@ const dict = {
     backupSaving: 'Sichert…', backupOffline: 'Offline — wird nachgeholt',
     backupError: 'Backup fehlgeschlagen', invalidToken: 'Schlüssel ungültig — bitte prüfen und erneut versuchen',
     restoreConfirm: 'Cloud-Backup in diese App zurückspielen? Vorhandene Daten werden zusammengeführt, nichts geht verloren.',
-    restoreDone: 'Backup wiederhergestellt', restoreFromBackup: 'Aus Cloud-Backup wiederherstellen'
+    restoreDone: 'Backup wiederhergestellt', restoreFromBackup: 'Aus Cloud-Backup wiederherstellen',
+    tokenBad: 'GitHub erkennt diesen Schlüssel nicht. Er ist evtl. unvollständig (den ganzen github_pat_…-Text kopieren) oder abgelaufen.',
+    tokenNoAccess: 'Der Schlüssel funktioniert, hat aber keinen Zugriff auf das Backup-Repository. Beim Erstellen „Only select repositories“ → timetrack-backup wählen und Contents auf „Read and write“ setzen.',
+    tokenNetwork: 'GitHub nicht erreichbar — Internetverbindung prüfen und erneut versuchen.'
   }
 };
 

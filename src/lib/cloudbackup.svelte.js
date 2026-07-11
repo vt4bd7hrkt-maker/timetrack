@@ -109,7 +109,11 @@ export async function connect(newToken) {
   const res = await fetch(REPO_API, {
     headers: { Authorization: `Bearer ${newToken}`, Accept: 'application/vnd.github+json' }
   });
-  if (!res.ok) throw new Error('invalid');
+  if (!res.ok) {
+    const err = new Error(`GitHub ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
   token = newToken;
   localStorage.setItem(TOKEN_KEY, token);
   cloud.enabled = true;

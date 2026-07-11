@@ -76,8 +76,11 @@
       } else {
         await backupNow();
       }
-    } catch {
-      cloudMsg = t('invalidToken');
+    } catch (err) {
+      if (err.status === 401) cloudMsg = t('tokenBad');
+      else if (err.status === 403 || err.status === 404) cloudMsg = t('tokenNoAccess');
+      else if (err.status) cloudMsg = `${t('backupError')} (GitHub ${err.status})`;
+      else cloudMsg = t('tokenNetwork');
     }
     cloudBusy = false;
   }
