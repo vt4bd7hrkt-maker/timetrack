@@ -9,6 +9,7 @@
   const C = 2 * Math.PI * R;
 
   const total = $derived(data.reduce((s, d) => s + d.value, 0) || 1);
+  const totalTxt = $derived(fmtHours(total === 1 ? 0 : total));
   const segments = $derived.by(() => {
     let acc = 0;
     return data.map((d) => {
@@ -36,7 +37,7 @@
         class="seg"
       />
     {/each}
-    <text x="60" y="57" text-anchor="middle" class="big mono">{fmtHours(total === 1 ? 0 : total)}</text>
+    <text x="60" y="57" text-anchor="middle" class="big mono" style="font-size:{totalTxt.length > 7 ? 12.5 : 17}px">{totalTxt}</text>
     <text x="60" y="72" text-anchor="middle" class="small">total</text>
   </svg>
 

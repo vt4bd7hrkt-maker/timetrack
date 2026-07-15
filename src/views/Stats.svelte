@@ -27,16 +27,18 @@
 
   const totalMs = $derived(inRange.reduce((s, e) => s + e.ms, 0));
 
-  const perProject = $derived(
-    data.projects
-      .map((p) => ({
-        label: p.title,
-        color: p.color,
-        value: inRange.filter((e) => e.projectId === p.id).reduce((s, e) => s + e.ms, 0)
-      }))
-      .filter((d) => d.value > 0)
-      .sort((a, b) => b.value - a.value)
-  );
+  const perProject = $derived.by(() => {
+    const ids = new Set(data.projects.map((p) => p.id));
+    const rows = data.projects.map((p) => ({
+      label: p.title,
+      color: p.color,
+      value: inRange.filter((e) => e.projectId === p.id).reduce((s, e) => s + e.ms, 0)
+    }));
+    // Entries of permanently deleted projects stay countable as "Unassigned".
+    const orphanMs = inRange.filter((e) => !ids.has(e.projectId)).reduce((s, e) => s + e.ms, 0);
+    if (orphanMs > 0) rows.push({ label: t('unassigned'), color: '#9a9ea2', value: orphanMs });
+    return rows.filter((d) => d.value > 0).sort((a, b) => b.value - a.value);
+  });
 
   /* averages over elapsed days in range (capped at now) */
   const elapsedDays = $derived(Math.max(1, Math.ceil((Math.min(to, Date.now()) - from) / DAY)));

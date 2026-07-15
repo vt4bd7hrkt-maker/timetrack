@@ -47,7 +47,13 @@ const dict = {
     restoreDone: 'Backup restored', restoreFromBackup: 'Restore from cloud backup',
     tokenBad: 'GitHub does not recognize this key. It may be incomplete (copy the whole github_pat_… string) or expired.',
     tokenNoAccess: 'The key works, but has no access to the backup repository. When creating it, choose "Only select repositories" → timetrack-backup, and set Contents to "Read and write".',
-    tokenNetwork: 'Could not reach GitHub — check your internet connection and try again.'
+    tokenNetwork: 'Could not reach GitHub — check your internet connection and try again.',
+    unassigned: 'Unassigned',
+    deleteProject: 'Delete project',
+    deleteProjectText: 'Permanently delete “{title}”? It has {n} time entries. You can keep the tracked time (shown as “Unassigned”) or delete it as well.',
+    deleteKeepEntries: 'Delete project, keep time entries',
+    deleteWithEntries: 'Delete project and time entries',
+    deleteEntriesConfirm: 'Permanently delete {n} time entries? This cannot be undone.'
   },
   de: {
     home: 'Home', projects: 'Projekte', stats: 'Statistik', calendar: 'Kalender', settings: 'Einstellungen',
@@ -90,7 +96,13 @@ const dict = {
     restoreDone: 'Backup wiederhergestellt', restoreFromBackup: 'Aus Cloud-Backup wiederherstellen',
     tokenBad: 'GitHub erkennt diesen Schlüssel nicht. Er ist evtl. unvollständig (den ganzen github_pat_…-Text kopieren) oder abgelaufen.',
     tokenNoAccess: 'Der Schlüssel funktioniert, hat aber keinen Zugriff auf das Backup-Repository. Beim Erstellen „Only select repositories“ → timetrack-backup wählen und Contents auf „Read and write“ setzen.',
-    tokenNetwork: 'GitHub nicht erreichbar — Internetverbindung prüfen und erneut versuchen.'
+    tokenNetwork: 'GitHub nicht erreichbar — Internetverbindung prüfen und erneut versuchen.',
+    unassigned: 'Ohne Projekt',
+    deleteProject: 'Projekt löschen',
+    deleteProjectText: '„{title}“ endgültig löschen? Es hat {n} Zeiteinträge. Du kannst die erfasste Zeit behalten (als „Ohne Projekt“) oder mitlöschen.',
+    deleteKeepEntries: 'Projekt löschen, Zeiteinträge behalten',
+    deleteWithEntries: 'Projekt und Zeiteinträge löschen',
+    deleteEntriesConfirm: '{n} Zeiteinträge endgültig löschen? Das kann nicht rückgängig gemacht werden.'
   }
 };
 

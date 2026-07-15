@@ -22,7 +22,7 @@
 
 <style>
   .bars { display: flex; flex-direction: column; gap: 10px; }
-  .row { display: grid; grid-template-columns: 92px 1fr 52px; align-items: center; gap: 10px; }
+  .row { display: grid; grid-template-columns: 84px 1fr 64px; align-items: center; gap: 10px; }
   .label { font-size: 12.5px; font-weight: 600; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .track { height: 10px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
   .bar {

@@ -8,6 +8,7 @@
   import BottomSheet from '../components/BottomSheet.svelte';
   import ProjectForm from '../components/ProjectForm.svelte';
   import EntryForm from '../components/EntryForm.svelte';
+  import DeleteProjectSheet from '../components/DeleteProjectSheet.svelte';
   import Line from '../components/charts/Line.svelte';
   import { buildRows, exportCSV, exportXLSX, exportPDF } from '../lib/export.js';
 
@@ -101,6 +102,7 @@
       <button class="btn btn-ghost" onclick={() => (sheet = 'edit')}>{t('edit')}</button>
       <button class="btn btn-ghost" onclick={() => { editEntry = null; sheet = 'addTime'; }}>+ {t('addTime')}</button>
       <button class="btn btn-ghost" onclick={toggleArchive}>{t(project.archived ? 'unarchive' : 'archive')}</button>
+      <button class="btn btn-danger" onclick={() => (sheet = 'delete')}>{t('deleteProject')}</button>
     </div>
 
     {#if series.some((s) => s.value > 0)}
@@ -133,6 +135,13 @@
       <EntryForm projectId={id} entry={editEntry} ondone={() => { sheet = null; editEntry = null; }} />
     {/if}
   </BottomSheet>
+
+  <DeleteProjectSheet
+    open={sheet === 'delete'}
+    {project}
+    onclose={() => (sheet = null)}
+    ondeleted={() => go('projects')}
+  />
 {/if}
 
 <style>

@@ -12,8 +12,9 @@
   import ProjectForm from '../components/ProjectForm.svelte';
   import EntryForm from '../components/EntryForm.svelte';
   import ForgotForm from '../components/ForgotForm.svelte';
+  import DeleteProjectSheet from '../components/DeleteProjectSheet.svelte';
 
-  let sheet = $state(null); // 'menu' | 'addTime' | 'forgot' | 'edit' | 'new'
+  let sheet = $state(null); // 'menu' | 'addTime' | 'forgot' | 'edit' | 'new' | 'delete'
   let menuProject = $state(null);
 
   const active = $derived(
@@ -104,8 +105,17 @@
     <button class="warn" onclick={archiveFromMenu}>
       <span>▣</span>{t('archive')}
     </button>
+    <button class="warn" onclick={() => (sheet = 'delete')}>
+      <span>✕</span>{t('deleteProject')}
+    </button>
   </div>
 </BottomSheet>
+
+<DeleteProjectSheet
+  open={sheet === 'delete'}
+  project={menuProject}
+  onclose={() => (sheet = null)}
+/>
 
 <BottomSheet open={sheet === 'addTime'} title={t('addTimeManually')} onclose={() => (sheet = null)}>
   {#if menuProject}
@@ -136,8 +146,9 @@
     gap: 10px;
     margin-bottom: 18px;
   }
-  .w { padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
-  .big { font-size: 21px; font-weight: 700; letter-spacing: -0.02em; }
+  .w { padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  /* h:mm:ss must fit a third of a small phone screen */
+  .big { font-size: clamp(14px, 4.4vw, 21px); font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; }
   .big.lit { color: var(--accent); }
 
   .fab {

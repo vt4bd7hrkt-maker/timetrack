@@ -14,6 +14,9 @@
   const lead = $derived((new Date(year, month, 1).getDay() + 6) % 7); // Monday-first offset
 
   const projById = $derived(new Map(data.projects.map((p) => [p.id, p])));
+  /** Entries whose project was permanently deleted are shown as "Unassigned". */
+  const UNASSIGNED_COLOR = '#9a9ea2';
+  const projOf = (pid) => projById.get(pid) || { id: '__unassigned__', title: t('unassigned'), color: UNASSIGNED_COLOR };
 
   /** day start ms -> { ms, colors:Set } */
   const dayMap = $derived.by(() => {
@@ -28,8 +31,7 @@
         if (ms > 0) {
           const cur = map.get(d) || { ms: 0, colors: new Set() };
           cur.ms += ms;
-          const p = projById.get(e.projectId);
-          if (p) cur.colors.add(p.color);
+          cur.colors.add(projOf(e.projectId).color);
           map.set(d, cur);
         }
         d += DAY;
@@ -56,8 +58,7 @@
       m.set(e.projectId, (m.get(e.projectId) || 0) + ms);
     }
     return [...m.entries()]
-      .map(([pid, ms]) => ({ p: projById.get(pid), ms }))
-      .filter((x) => x.p)
+      .map(([pid, ms]) => ({ p: projOf(pid), ms }))
       .sort((a, b) => b.ms - a.ms);
   });
 
@@ -131,7 +132,7 @@
           {#each dayEntries as e (e.id)}
             <li>
               <span class="mono trange">{fmtTime(Math.max(e.start, selected))}–{fmtTime(Math.min(e.end, selected + DAY))}</span>
-              <span class="pname" style="color:{projById.get(e.projectId)?.color}">{projById.get(e.projectId)?.title || '?'}</span>
+              <span class="pname" style="color:{projOf(e.projectId).color}">{projOf(e.projectId).title}</span>
               {#if e.note}<span class="note">{e.note}</span>{/if}
             </li>
           {/each}
@@ -163,8 +164,9 @@
     gap: 1px;
     font-size: 13px;
     position: relative;
-    transition: background 0.15s;
+    transition: background 0.15s, transform 0.12s var(--ease);
   }
+  .day:active { transform: scale(0.92); }
   .day.has { background: var(--surface-2); }
   .day.today .num {
     color: var(--on-accent);

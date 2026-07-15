@@ -92,14 +92,29 @@ export async function setArchived(projectId, archived) {
   await saveProject({ ...p, archived });
 }
 
-export async function deleteProject(projectId) {
+/**
+ * Permanently delete a project.
+ * deleteEntries=false keeps its time entries: they stay in the data as
+ * "unassigned" (their projectId no longer resolves) and views bucket them
+ * under an Unassigned label.
+ */
+export async function deleteProject(projectId, { deleteEntries = true } = {}) {
   const p = data.projects.find((x) => x.id === projectId);
   if (!p) return;
-  await db.put('projects', { ...p, deleted: true, updatedAt: Date.now() }); // tombstone for future sync
+  // A running timer either becomes a kept entry or is discarded with the rest.
+  if (deleteEntries) {
+    await db.del('timers', projectId).catch(() => {});
+    data.timers = data.timers.filter((x) => x.projectId !== projectId);
+  } else {
+    await stopTimer(projectId).catch(() => {});
+  }
+  await db.put('projects', { ...p, deleted: true, updatedAt: Date.now() }); // tombstone for sync
   data.projects = data.projects.filter((x) => x.id !== projectId);
-  const dead = data.entries.filter((e) => e.projectId === projectId);
-  for (const e of dead) await db.put('entries', { ...e, deleted: true, updatedAt: Date.now() });
-  data.entries = data.entries.filter((e) => e.projectId !== projectId);
+  if (deleteEntries) {
+    const dead = data.entries.filter((e) => e.projectId === projectId);
+    for (const e of dead) await db.put('entries', { ...e, deleted: true, updatedAt: Date.now() });
+    data.entries = data.entries.filter((e) => e.projectId !== projectId);
+  }
 }
 
 /* ------------------------------ timers --------------------------------- */

@@ -39,6 +39,7 @@
   onkeydown={(e) => e.key === 'Enter' && toggle()}
   role="button"
   tabindex="0"
+  aria-label="{project.title} — {running ? t('running') : t(project.archived ? 'archived' : project.status)}"
 >
   <div class="top">
     <span class="dot"></span>

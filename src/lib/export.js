@@ -3,6 +3,7 @@
  * xlsx and jspdf are dynamically imported so they never weigh down app startup.
  */
 import { fmtDur, fmtTime, toDateInput } from './time.js';
+import { t } from './i18n.svelte.js';
 
 function download(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -24,7 +25,7 @@ export function buildRows(entriesList, projectsList) {
       const p = byId.get(e.projectId);
       return {
         date: toDateInput(e.start),
-        project: p ? p.title : '?',
+        project: p ? p.title : t('unassigned'),
         client: p ? p.client : '',
         start: fmtTime(e.start),
         end: fmtTime(e.end),

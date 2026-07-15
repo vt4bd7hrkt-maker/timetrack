@@ -47,8 +47,11 @@ export function longpress(node, callback) {
   node.addEventListener('pointermove', move);
   node.addEventListener('pointerup', cancel);
   node.addEventListener('pointercancel', cancel);
+  node.addEventListener('pointerleave', cancel);
   node.addEventListener('click', click, true);
   node.addEventListener('contextmenu', ctx);
+  // iOS Safari can still begin a selection before pointercancel fires.
+  node.addEventListener('selectstart', ctx);
 
   return {
     update(newCallback) {
@@ -60,8 +63,10 @@ export function longpress(node, callback) {
       node.removeEventListener('pointermove', move);
       node.removeEventListener('pointerup', cancel);
       node.removeEventListener('pointercancel', cancel);
+      node.removeEventListener('pointerleave', cancel);
       node.removeEventListener('click', click, true);
       node.removeEventListener('contextmenu', ctx);
+      node.removeEventListener('selectstart', ctx);
     }
   };
 }
