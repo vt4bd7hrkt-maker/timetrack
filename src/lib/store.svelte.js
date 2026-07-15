@@ -196,7 +196,9 @@ export async function importBackup(json) {
   const parsed = JSON.parse(json);
   if (parsed.app !== 'timetrack') throw new Error('Not a Timetrack backup');
   const merge = async (storeName, incoming, key) => {
-    const byId = new Map(data[key].map((x) => [x.id, x]));
+    // $state proxies are not structured-cloneable — IndexedDB would throw
+    // DataCloneError, so merge on plain snapshots.
+    const byId = new Map($state.snapshot(data[key]).map((x) => [x.id, x]));
     for (const item of incoming || []) {
       const existing = byId.get(item.id);
       if (!existing || (item.updatedAt || 0) > (existing.updatedAt || 0)) byId.set(item.id, item);
