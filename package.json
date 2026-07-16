@@ -11,6 +11,7 @@
     "icons": "node scripts/make-icons.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.110.7",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
     "xlsx": "^0.18.5"
@@ -19,6 +20,7 @@
     "@sveltejs/vite-plugin-svelte": "^6.0.0",
     "pngjs": "^7.0.0",
     "svelte": "^5.0.0",
+    "typescript": "^7.0.2",
     "vite": "^7.0.0"
   }
 }
