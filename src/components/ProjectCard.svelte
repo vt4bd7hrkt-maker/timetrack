@@ -6,7 +6,7 @@
    */
   import { data, clock, startTimer, stopTimer, trackedMs, isRunning } from '../lib/store.svelte.js';
   import { longpress } from '../lib/longpress.js';
-  import { fmtClock, fmtHours, HOUR } from '../lib/time.js';
+  import { fmtClock, fmtHM, HOUR, startOfDay, endOfDay, overlapMs, workedOverlapMs } from '../lib/time.js';
   import { t } from '../lib/i18n.svelte.js';
   import { go } from '../lib/router.svelte.js';
 
@@ -16,7 +16,17 @@
   const running = $derived(isRunning(project.id));
   const timer = $derived(data.timers.find((x) => x.projectId === project.id));
   const elapsed = $derived(timer ? Math.max(0, clock.now - timer.startedAt) : 0);
-  const totalMs = $derived(trackedMs(project.id));
+  const totalMs = $derived(trackedMs(project.id)); // quota math only — not displayed
+  /* Today's worked time, live: clock.now moves it while a timer runs and
+     rolls it over to 0 at midnight. */
+  const todayMs = $derived.by(() => {
+    const from = startOfDay(clock.now);
+    const to = endOfDay(clock.now);
+    let ms = 0;
+    for (const e of data.entries) if (e.projectId === project.id) ms += workedOverlapMs(e, from, to);
+    if (timer) ms += overlapMs(timer.startedAt, clock.now, from, to);
+    return ms;
+  });
   const quotaMs = $derived((project.quotaHours || 0) * HOUR);
   const pct = $derived(quotaMs ? Math.min(100, (totalMs / quotaMs) * 100) : 0);
   const over = $derived(quotaMs > 0 && totalMs > quotaMs);
@@ -52,11 +62,11 @@
   </div>
 
   <div class="mid">
-    <span class="hours mono">{fmtHours(totalMs)}</span>
-    <span class="sub">{t('tracked')}</span>
+    <span class="hours mono">{fmtHM(todayMs)}</span>
+    <span class="sub">{t('today').toLowerCase()}</span>
     {#if quotaMs}
       <span class="rest mono" class:overrun={over}>
-        {over ? '+' : ''}{fmtHours(Math.abs(remaining))} {t('remaining')}
+        {over ? '+' : ''}{fmtHM(Math.abs(remaining))} {t('remaining')}
       </span>
     {/if}
     <button
@@ -73,7 +83,6 @@
 
   {#if quotaMs}
     <div class="progress"><div class:over style="width:{pct}%"></div></div>
-    <div class="quota-line mono">{fmtHours(totalMs)} {t('ofQuota')} {project.quotaHours}h</div>
   {/if}
 </div>
 
@@ -122,7 +131,7 @@
   .status { font-size: 12px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
 
   .mid { display: flex; align-items: baseline; gap: 8px; margin: 12px 0 10px; }
-  .hours { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; }
+  .hours { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; }
   .sub { font-size: 13px; color: var(--text-3); }
   .rest { margin-left: auto; font-size: 13px; color: var(--text-2); }
   .rest.overrun { color: var(--danger); }
@@ -135,6 +144,4 @@
     margin: -6px -6px -6px 0;
   }
   .more svg { width: 18px; height: 18px; }
-
-  .quota-line { font-size: 11.5px; color: var(--text-3); margin-top: 6px; }
 </style>

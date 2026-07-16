@@ -53,7 +53,11 @@ const dict = {
     deleteProjectText: 'Permanently delete “{title}”? It has {n} time entries. You can keep the tracked time (shown as “Unassigned”) or delete it as well.',
     deleteKeepEntries: 'Delete project, keep time entries',
     deleteWithEntries: 'Delete project and time entries',
-    deleteEntriesConfirm: 'Permanently delete {n} time entries? This cannot be undone.'
+    deleteEntriesConfirm: 'Permanently delete {n} time entries? This cannot be undone.',
+    yesterday: 'Yesterday', last7Days: 'Last 7 days', prevWeek: 'Previous week',
+    last30Days: 'Last 30 days', prevMonth: 'Previous month', last90Days: 'Last 90 days', prevYear: 'Previous year',
+    breaks: 'Breaks', addBreak: 'Add break', breakLabel: 'Break',
+    breakInvalid: 'Breaks must lie inside the entry and end after they start'
   },
   de: {
     home: 'Home', projects: 'Projekte', stats: 'Statistik', calendar: 'Kalender', settings: 'Einstellungen',
@@ -102,7 +106,11 @@ const dict = {
     deleteProjectText: '„{title}“ endgültig löschen? Es hat {n} Zeiteinträge. Du kannst die erfasste Zeit behalten (als „Ohne Projekt“) oder mitlöschen.',
     deleteKeepEntries: 'Projekt löschen, Zeiteinträge behalten',
     deleteWithEntries: 'Projekt und Zeiteinträge löschen',
-    deleteEntriesConfirm: '{n} Zeiteinträge endgültig löschen? Das kann nicht rückgängig gemacht werden.'
+    deleteEntriesConfirm: '{n} Zeiteinträge endgültig löschen? Das kann nicht rückgängig gemacht werden.',
+    yesterday: 'Gestern', last7Days: 'Letzte 7 Tage', prevWeek: 'Vorwoche',
+    last30Days: 'Letzte 30 Tage', prevMonth: 'Vormonat', last90Days: 'Letzte 90 Tage', prevYear: 'Vorjahr',
+    breaks: 'Pausen', addBreak: 'Pause hinzufügen', breakLabel: 'Pause',
+    breakInvalid: 'Pausen müssen innerhalb des Eintrags liegen und nach ihrem Start enden'
   }
 };
 

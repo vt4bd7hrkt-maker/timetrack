@@ -1,7 +1,7 @@
 <script>
   /** Per-project page: facts, quota progress, mini stats, entry history, export. */
   import { data, setArchived, trackedMs } from '../lib/store.svelte.js';
-  import { fmtHours, HOUR, DAY, overlapMs, startOfDay } from '../lib/time.js';
+  import { fmtHours, HOUR, DAY, workedOverlapMs, startOfDay } from '../lib/time.js';
   import { t } from '../lib/i18n.svelte.js';
   import { go } from '../lib/router.svelte.js';
   import EntryList from '../components/EntryList.svelte';
@@ -32,7 +32,7 @@
     const today = startOfDay(Date.now());
     for (let i = 13; i >= 0; i--) {
       const from = today - i * DAY;
-      const ms = myEntries.reduce((s, e) => s + overlapMs(e.start, e.end, from, from + DAY), 0);
+      const ms = myEntries.reduce((s, e) => s + workedOverlapMs(e, from, from + DAY), 0);
       const d = new Date(from);
       out.push({ label: `${d.getDate()}.`, value: ms / HOUR });
     }

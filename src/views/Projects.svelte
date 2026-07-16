@@ -1,7 +1,7 @@
 <script>
   /** All projects with search, grouped by status, incl. archive. */
   import { data, setArchived } from '../lib/store.svelte.js';
-  import { fmtHours } from '../lib/time.js';
+  import { fmtHours, entryMs } from '../lib/time.js';
   import { t } from '../lib/i18n.svelte.js';
   import { go } from '../lib/router.svelte.js';
   import BottomSheet from '../components/BottomSheet.svelte';
@@ -31,7 +31,7 @@
 
   const archived = $derived(filtered.filter((p) => p.archived));
 
-  const totalFor = (id) => data.entries.filter((x) => x.projectId === id).reduce((s, x) => s + x.end - x.start, 0);
+  const totalFor = (id) => data.entries.filter((x) => x.projectId === id).reduce((s, x) => s + entryMs(x), 0);
 </script>
 
 <div class="view">

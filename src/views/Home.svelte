@@ -5,7 +5,7 @@
    */
   import { data, clock, setArchived } from '../lib/store.svelte.js';
   import { go } from '../lib/router.svelte.js';
-  import { startOfDay, endOfDay, overlapMs, fmtHours, HOUR } from '../lib/time.js';
+  import { startOfDay, endOfDay, overlapMs, workedOverlapMs, entryMs, fmtHours, HOUR } from '../lib/time.js';
   import { t } from '../lib/i18n.svelte.js';
   import ProjectCard from '../components/ProjectCard.svelte';
   import BottomSheet from '../components/BottomSheet.svelte';
@@ -31,14 +31,14 @@
   const dayStart = $derived(startOfDay(clock.now));
   const dayEnd = $derived(endOfDay(clock.now));
   const todayMs = $derived(
-    data.entries.reduce((s, e) => s + overlapMs(e.start, e.end, dayStart, dayEnd), 0) +
+    data.entries.reduce((s, e) => s + workedOverlapMs(e, dayStart, dayEnd), 0) +
       data.timers.reduce((s, tm) => s + overlapMs(tm.startedAt, clock.now, dayStart, dayEnd), 0)
   );
   const openMs = $derived(
     data.projects
       .filter((p) => !p.archived && p.status !== 'completed' && p.quotaHours > 0)
       .reduce((s, p) => {
-        const tracked = data.entries.filter((e) => e.projectId === p.id).reduce((x, e) => x + e.end - e.start, 0);
+        const tracked = data.entries.filter((e) => e.projectId === p.id).reduce((x, e) => x + entryMs(e), 0);
         return s + Math.max(0, p.quotaHours * HOUR - tracked);
       }, 0)
   );

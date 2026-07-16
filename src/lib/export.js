@@ -2,7 +2,7 @@
  * CSV / Excel / PDF exports.
  * xlsx and jspdf are dynamically imported so they never weigh down app startup.
  */
-import { fmtDur, fmtTime, toDateInput } from './time.js';
+import { fmtTime, toDateInput, entryMs, breaksMs } from './time.js';
 import { t } from './i18n.svelte.js';
 
 function download(blob, filename) {
@@ -29,28 +29,29 @@ export function buildRows(entriesList, projectsList) {
         client: p ? p.client : '',
         start: fmtTime(e.start),
         end: fmtTime(e.end),
-        hours: +((e.end - e.start) / 3600000).toFixed(2),
+        breakHours: +(breaksMs(e) / 3600000).toFixed(2),
+        hours: +(entryMs(e) / 3600000).toFixed(2),
         note: e.note || ''
       };
     });
 }
 
 export function exportCSV(rows, filename = 'timetrack.csv') {
-  const head = ['Date', 'Project', 'Client', 'Start', 'End', 'Hours', 'Comment'];
+  const head = ['Date', 'Project', 'Client', 'Start', 'End', 'Break', 'Hours', 'Comment'];
   const esc = (v) => {
     const s = String(v ?? '');
     return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const lines = [head.join(';'), ...rows.map((r) => [r.date, r.project, r.client, r.start, r.end, r.hours, r.note].map(esc).join(';'))];
+  const lines = [head.join(';'), ...rows.map((r) => [r.date, r.project, r.client, r.start, r.end, r.breakHours, r.hours, r.note].map(esc).join(';'))];
   download(new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' }), filename);
 }
 
 export async function exportXLSX(rows, filename = 'timetrack.xlsx') {
   const XLSX = await import('xlsx');
   const ws = XLSX.utils.json_to_sheet(
-    rows.map((r) => ({ Date: r.date, Project: r.project, Client: r.client, Start: r.start, End: r.end, Hours: r.hours, Comment: r.note }))
+    rows.map((r) => ({ Date: r.date, Project: r.project, Client: r.client, Start: r.start, End: r.end, Break: r.breakHours, Hours: r.hours, Comment: r.note }))
   );
-  ws['!cols'] = [{ wch: 11 }, { wch: 24 }, { wch: 18 }, { wch: 7 }, { wch: 7 }, { wch: 7 }, { wch: 30 }];
+  ws['!cols'] = [{ wch: 11 }, { wch: 24 }, { wch: 18 }, { wch: 7 }, { wch: 7 }, { wch: 7 }, { wch: 7 }, { wch: 30 }];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Timetrack');
   XLSX.writeFile(wb, filename);
@@ -73,9 +74,9 @@ export async function exportPDF(rows, { title = 'Timetrack Report', subtitle = '
   const total = rows.reduce((s, r) => s + r.hours, 0);
   autoTable(doc, {
     startY: subtitle ? 34 : 28,
-    head: [['Date', 'Project', 'Start', 'End', 'Hours', 'Comment']],
-    body: rows.map((r) => [r.date, r.project, r.start, r.end, r.hours.toFixed(2), r.note]),
-    foot: [['', '', '', 'Total', total.toFixed(2), '']],
+    head: [['Date', 'Project', 'Start', 'End', 'Break', 'Hours', 'Comment']],
+    body: rows.map((r) => [r.date, r.project, r.start, r.end, r.breakHours ? r.breakHours.toFixed(2) : '', r.hours.toFixed(2), r.note]),
+    foot: [['', '', '', '', 'Total', total.toFixed(2), '']],
     styles: { fontSize: 9 },
     headStyles: { fillColor: [23, 25, 27], textColor: [57, 255, 20] },
     footStyles: { fillColor: [241, 241, 238], textColor: [23, 25, 27], fontStyle: 'bold' }

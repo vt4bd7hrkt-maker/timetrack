@@ -1,7 +1,7 @@
 <script>
   /** Month view; tapping a day shows its timeline. */
   import { data } from '../lib/store.svelte.js';
-  import { DAY, HOUR, overlapMs, fmtHours, fmtTime, fmtDateFull, startOfDay } from '../lib/time.js';
+  import { DAY, HOUR, overlapMs, workedOverlapMs, fmtHours, fmtHM, breaksMs, fmtTime, fmtDateFull, startOfDay } from '../lib/time.js';
   import { t } from '../lib/i18n.svelte.js';
 
   let cursor = $state(new Date());
@@ -27,7 +27,7 @@
       if (e.end <= mFrom || e.start >= mTo) continue;
       let d = Math.max(startOfDay(e.start), mFrom);
       while (d < Math.min(e.end, mTo)) {
-        const ms = overlapMs(e.start, e.end, d, d + DAY);
+        const ms = workedOverlapMs(e, d, d + DAY);
         if (ms > 0) {
           const cur = map.get(d) || { ms: 0, colors: new Set() };
           cur.ms += ms;
@@ -48,13 +48,13 @@
           .sort((a, b) => a.start - b.start)
   );
 
-  const dayTotal = $derived(dayEntries.reduce((s, e) => s + overlapMs(e.start, e.end, selected, selected + DAY), 0));
+  const dayTotal = $derived(dayEntries.reduce((s, e) => s + workedOverlapMs(e, selected, selected + DAY), 0));
 
   /** per-project totals for the selected day */
   const dayPerProject = $derived.by(() => {
     const m = new Map();
     for (const e of dayEntries) {
-      const ms = overlapMs(e.start, e.end, selected, selected + DAY);
+      const ms = workedOverlapMs(e, selected, selected + DAY);
       m.set(e.projectId, (m.get(e.projectId) || 0) + ms);
     }
     return [...m.entries()]
@@ -133,6 +133,7 @@
             <li>
               <span class="mono trange">{fmtTime(Math.max(e.start, selected))}–{fmtTime(Math.min(e.end, selected + DAY))}</span>
               <span class="pname" style="color:{projOf(e.projectId).color}">{projOf(e.projectId).title}</span>
+              {#if e.breaks?.length}<span class="bnote mono">−{fmtHM(breaksMs(e))}</span>{/if}
               {#if e.note}<span class="note">{e.note}</span>{/if}
             </li>
           {/each}
@@ -206,6 +207,7 @@
   }
   li:last-child { border-bottom: none; }
   .trange { color: var(--text-2); font-size: 13px; }
+  .bnote { color: var(--text-3); font-size: 11.5px; flex-shrink: 0; }
   .pname { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .note { color: var(--text-3); font-size: 12.5px; margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40%; }
 </style>

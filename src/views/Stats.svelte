@@ -1,16 +1,21 @@
 <script>
   /** Analytics: range filters, KPIs, bar / donut / line charts. */
   import { data } from '../lib/store.svelte.js';
-  import { rangeFor, overlapMs, fmtHours, fromInputs, toDateInput, DAY, HOUR } from '../lib/time.js';
+  import { rangeFor, workedOverlapMs, fmtHours, fromInputs, toDateInput, DAY, HOUR } from '../lib/time.js';
   import { t } from '../lib/i18n.svelte.js';
   import Bars from '../components/charts/Bars.svelte';
   import Donut from '../components/charts/Donut.svelte';
   import Line from '../components/charts/Line.svelte';
 
-  const filters = ['today', 'week', 'month', 'year', 'custom'];
-  const filterLabel = { today: 'today', week: 'thisWeek', month: 'thisMonth', year: 'thisYear', custom: 'customRange' };
+  const filters = ['today', 'yesterday', 'week', 'last7', 'prevWeek', 'month', 'last30', 'prevMonth', 'last90', 'year', 'prevYear', 'custom'];
+  const filterLabel = {
+    today: 'today', yesterday: 'yesterday', week: 'thisWeek', last7: 'last7Days', prevWeek: 'prevWeek',
+    month: 'thisMonth', last30: 'last30Days', prevMonth: 'prevMonth', last90: 'last90Days',
+    year: 'thisYear', prevYear: 'prevYear', custom: 'customRange'
+  };
 
   let filter = $state('week');
+  let projFilter = $state('all');
   let customFrom = $state(toDateInput(Date.now() - 7 * DAY));
   let customTo = $state(toDateInput(Date.now()));
 
@@ -19,9 +24,16 @@
   const from = $derived(range[0]);
   const to = $derived(range[1]);
 
+  const projIds = $derived(new Set(data.projects.map((p) => p.id)));
+  const hasOrphans = $derived(data.entries.some((e) => !projIds.has(e.projectId)));
+  const matchesProject = (e) =>
+    projFilter === 'all' ||
+    (projFilter === '__unassigned__' ? !projIds.has(e.projectId) : e.projectId === projFilter);
+
   const inRange = $derived(
     data.entries
-      .map((e) => ({ ...e, ms: overlapMs(e.start, e.end, from, to) }))
+      .filter(matchesProject)
+      .map((e) => ({ ...e, ms: workedOverlapMs(e, from, to) }))
       .filter((e) => e.ms > 0)
   );
 
@@ -53,7 +65,7 @@
     const out = [];
     for (let i = 0; i < days; i++) {
       const dFrom = from + i * DAY;
-      const ms = inRange.reduce((s, e) => s + overlapMs(e.start, e.end, dFrom, dFrom + DAY), 0);
+      const ms = inRange.reduce((s, e) => s + workedOverlapMs(e, dFrom, dFrom + DAY), 0);
       const d = new Date(dFrom);
       out.push({ label: `${d.getDate()}.${d.getMonth() + 1}`, value: ms / HOUR });
     }
@@ -70,6 +82,19 @@
         {t(filterLabel[f])}
       </button>
     {/each}
+  </div>
+
+  <div class="field proj-filter">
+    <label for="st-proj">{t('project')}</label>
+    <select id="st-proj" bind:value={projFilter}>
+      <option value="all">{t('allProjects')}</option>
+      {#each data.projects as p (p.id)}
+        <option value={p.id}>{p.title}</option>
+      {/each}
+      {#if hasOrphans}
+        <option value="__unassigned__">{t('unassigned')}</option>
+      {/if}
+    </select>
   </div>
 
   {#if filter === 'custom'}
@@ -107,15 +132,17 @@
   {#if totalMs === 0}
     <p class="empty">{t('noData')}</p>
   {:else}
-    <div class="card block">
-      <p class="label-caps head">{t('hoursPerProject')}</p>
-      <Bars data={perProject} />
-    </div>
+    {#if projFilter === 'all'}
+      <div class="card block">
+        <p class="label-caps head">{t('hoursPerProject')}</p>
+        <Bars data={perProject} />
+      </div>
 
-    <div class="card block">
-      <p class="label-caps head">{t('distribution')}</p>
-      <Donut data={perProject} />
-    </div>
+      <div class="card block">
+        <p class="label-caps head">{t('distribution')}</p>
+        <Donut data={perProject} />
+      </div>
+    {/if}
 
     {#if series.length > 1}
       <div class="card block">
@@ -127,7 +154,21 @@
 </div>
 
 <style>
-  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; }
+  .chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    /* let the chip row bleed to the screen edge for a native feel */
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .proj-filter { margin-bottom: 12px; }
   .custom { margin-bottom: 8px; }
   .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .kpi { padding: 13px 15px; display: flex; flex-direction: column; gap: 4px; }

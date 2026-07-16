@@ -22,6 +22,28 @@ export function fmtDur(ms) {
   return fmtClock(ms);
 }
 
+/** 7h 30m — compact daily readout (home cards, break chips) */
+export function fmtHM(ms) {
+  const m = Math.floor(Math.max(0, ms) / 60000);
+  return `${Math.floor(m / 60)}h ${m % 60}m`;
+}
+
+/* ------- break-aware durations -------
+   An entry may carry `breaks: [{ start, end }]` (epoch ms, inside the entry,
+   non-overlapping). Worked time is the entry span minus its breaks. */
+
+export const breaksMs = (e) => (e.breaks || []).reduce((s, b) => s + Math.max(0, b.end - b.start), 0);
+
+/** Worked (net) duration of an entry. */
+export const entryMs = (e) => e.end - e.start - breaksMs(e);
+
+/** Worked ms of an entry that fall inside [from, to). */
+export function workedOverlapMs(e, from, to) {
+  let ms = overlapMs(e.start, e.end, from, to);
+  for (const b of e.breaks || []) ms -= overlapMs(b.start, b.end, from, to);
+  return Math.max(0, ms);
+}
+
 export function fmtTime(ts) {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 }
@@ -56,6 +78,19 @@ export function startOfYear(ts) {
 export function rangeFor(filter, now = Date.now(), custom = null) {
   switch (filter) {
     case 'today': return [startOfDay(now), endOfDay(now)];
+    case 'yesterday': return [startOfDay(now) - DAY, startOfDay(now)];
+    case 'last7': return [startOfDay(now) - 6 * DAY, endOfDay(now)];
+    case 'last30': return [startOfDay(now) - 29 * DAY, endOfDay(now)];
+    case 'last90': return [startOfDay(now) - 89 * DAY, endOfDay(now)];
+    case 'prevWeek': return [startOfWeek(now) - 7 * DAY, startOfWeek(now)];
+    case 'prevMonth': {
+      const d = new Date(startOfMonth(now));
+      return [new Date(d.getFullYear(), d.getMonth() - 1, 1).getTime(), startOfMonth(now)];
+    }
+    case 'prevYear': {
+      const y = new Date(now).getFullYear();
+      return [new Date(y - 1, 0, 1).getTime(), new Date(y, 0, 1).getTime()];
+    }
     case 'week': return [startOfWeek(now), startOfWeek(now) + 7 * DAY];
     case 'month': {
       const from = startOfMonth(now);

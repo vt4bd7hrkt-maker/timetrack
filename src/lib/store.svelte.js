@@ -14,6 +14,7 @@
  * or $derived that touches them updates automatically.
  */
 import * as db from './db.js';
+import { entryMs } from './time.js';
 
 export const data = $state({
   projects: [],
@@ -141,9 +142,9 @@ export const isRunning = (projectId) => data.timers.some((t) => t.projectId === 
 
 /* ------------------------------ entries -------------------------------- */
 
-export async function addEntry({ projectId, start, end, note = '' }) {
+export async function addEntry({ projectId, start, end, note = '', breaks = [] }) {
   const nowTs = Date.now();
-  const e = { id: uid(), projectId, start, end, note, deleted: false, createdAt: nowTs, updatedAt: nowTs };
+  const e = { id: uid(), projectId, start, end, note, breaks, deleted: false, createdAt: nowTs, updatedAt: nowTs };
   await db.put('entries', e);
   data.entries.push(e);
   return e;
@@ -168,7 +169,7 @@ export async function deleteEntry(id) {
 /** Total tracked ms for a project incl. a currently running timer. Reactive. */
 export function trackedMs(projectId) {
   let ms = 0;
-  for (const e of data.entries) if (e.projectId === projectId) ms += e.end - e.start;
+  for (const e of data.entries) if (e.projectId === projectId) ms += entryMs(e);
   const t = data.timers.find((x) => x.projectId === projectId);
   if (t) ms += Math.max(0, clock.now - t.startedAt);
   return ms;
