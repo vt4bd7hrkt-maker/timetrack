@@ -112,7 +112,7 @@ async function pushTimers(u: string): Promise<void> {
 
 /* --------------------------------- pull ---------------------------------- */
 
-async function pullTable(table: string, metaKey: string): Promise<any[]> {
+async function pullTable(table: string, metaKey: string, tiebreak: string = 'id'): Promise<any[]> {
   const since: string = (await db.getMeta(metaKey)) ?? '1970-01-01T00:00:00Z';
   const rows: any[] = [];
   for (let from = 0; ; from += PAGE) {
@@ -121,7 +121,7 @@ async function pullTable(table: string, metaKey: string): Promise<any[]> {
       .select('*')
       .gt('synced_at', since)
       .order('synced_at', { ascending: true })
-      .order('id', { ascending: true })
+      .order(tiebreak, { ascending: true }) // stable page order (settings has no id)
       .range(from, from + PAGE - 1);
     if (error) throw error;
     rows.push(...(page ?? []));
@@ -181,7 +181,7 @@ export async function syncNow(): Promise<void> {
     const em = maxSyncedAt(entryRows);
     if (em) await db.setMeta(`pull:${u}:time_entries`, em);
 
-    const settingRows = await pullTable('settings', `pull:${u}:settings`);
+    const settingRows = await pullTable('settings', `pull:${u}:settings`, 'key');
     await applyRemoteSettings(
       settingRows.map((r: any) => ({ key: r.key, value: r.value, updatedAt: Number(r.updated_at) }))
     );
