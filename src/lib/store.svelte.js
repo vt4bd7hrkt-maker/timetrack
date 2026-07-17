@@ -55,7 +55,7 @@ export async function init() {
 
 export async function saveSetting(key, value) {
   settings[key] = value;
-  await db.put('settings', { key, value });
+  await db.put('settings', { key, value, updatedAt: Date.now() });
 }
 
 /* ----------------------------- projects -------------------------------- */
@@ -209,6 +209,53 @@ export async function importBackup(json) {
   };
   await merge('projects', parsed.projects, 'projects');
   await merge('entries', parsed.entries, 'entries');
+}
+
+/* ------------------------------ cloud sync ------------------------------ */
+
+/**
+ * Merge remote records into local state, last-updated-wins.
+ * kind: 'projects' | 'entries'. Records are plain objects in the local
+ * shape (already mapped from DB rows), including tombstones.
+ */
+export async function applyRemote(kind, records) {
+  if (!records.length) return;
+  const storeName = kind === 'projects' ? 'projects' : 'entries';
+  const existing = await db.all(storeName); // includes tombstones
+  const byId = new Map(existing.map((x) => [x.id, x]));
+  const winners = [];
+  for (const r of records) {
+    const cur = byId.get(r.id);
+    if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) {
+      byId.set(r.id, r);
+      winners.push(r);
+    }
+  }
+  if (!winners.length) return;
+  await db.bulkPut(storeName, winners);
+  data[kind === 'projects' ? 'projects' : 'entries'] = [...byId.values()].filter((x) => !x.deleted);
+}
+
+/** Replace the local running-timer set with the server's state. */
+export async function applyRemoteTimers(list) {
+  const local = await db.all('timers');
+  const incoming = new Map(list.map((t) => [t.projectId, t]));
+  for (const t of local) if (!incoming.has(t.projectId)) await db.del('timers', t.projectId);
+  for (const t of list) await db.put('timers', t);
+  data.timers = list;
+}
+
+/** Merge remote settings, last-updated-wins per key. */
+export async function applyRemoteSettings(records) {
+  const existing = await db.all('settings');
+  const byKey = new Map(existing.map((s) => [s.key, s]));
+  for (const r of records) {
+    const cur = byKey.get(r.key);
+    if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) {
+      await db.put('settings', r);
+      settings[r.key] = r.value;
+    }
+  }
 }
 
 export async function eraseAll() {

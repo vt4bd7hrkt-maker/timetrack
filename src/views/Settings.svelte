@@ -2,6 +2,10 @@
   /** Theme, language, daily goal, exports, backup, danger zone. */
   import { settings, saveSetting, data, exportBackup, importBackup, eraseAll } from '../lib/store.svelte.js';
   import { cloud, connect, disconnect, backupNow, restoreNow } from '../lib/cloudbackup.svelte.js';
+  import { cloudConfigured } from '../lib/cloud/supabase';
+  import { auth, signOut } from '../lib/cloud/auth.svelte';
+  import { sync } from '../lib/cloud/sync.svelte';
+  import AccountSheet from '../components/AccountSheet.svelte';
   import { buildRows, exportCSV, exportXLSX, exportPDF } from '../lib/export.js';
   import { toDateInput, fromInputs, DAY } from '../lib/time.js';
   import { t } from '../lib/i18n.svelte.js';
@@ -59,6 +63,14 @@
     if (confirm(t('eraseConfirm'))) eraseAll();
   }
 
+  /* --- account --- */
+  let accountOpen = $state(false);
+
+  async function doSignOut() {
+    if (!confirm(t('signOutConfirm'))) return;
+    await signOut();
+  }
+
   /* --- cloud backup --- */
   let tokenInput = $state('');
   let cloudBusy = $state(false);
@@ -101,6 +113,28 @@
 
 <div class="view">
   <h1 class="view-title">{t('settings')}</h1>
+
+  {#if cloudConfigured}
+    <div class="card sec">
+      <p class="label-caps head">{t('account')}</p>
+      {#if auth.user}
+        <p class="acc-line">{auth.user.email}</p>
+        <p class="acc-status">
+          {#if sync.status === 'syncing'}{t('syncing')}
+          {:else if sync.status === 'offline'}{t('syncOffline')}
+          {:else if sync.status === 'error'}<span class="acc-err">{t('syncError')}: {sync.error}</span>
+          {:else if sync.lastSync}{t('syncedAt')} {new Date(sync.lastSync).toLocaleTimeString()}
+          {:else}{t('syncing')}{/if}
+        </p>
+        <div class="exp-btns">
+          <button class="btn btn-ghost" onclick={doSignOut}>{t('signOut')}</button>
+        </div>
+      {:else}
+        <p class="acc-status">{t('accountInfo')}</p>
+        <button class="btn btn-accent" onclick={() => (accountOpen = true)}>{t('signIn')}</button>
+      {/if}
+    </div>
+  {/if}
 
   <div class="card sec">
     <p class="label-caps head">{t('theme')}</p>
@@ -204,8 +238,10 @@
     <button class="btn btn-danger" onclick={erase}>{t('eraseAll')}</button>
   </div>
 
-  <p class="about">Timetrack 1.0 · local-first · built for freelancers</p>
+  <p class="about">Timetrack 2.0 · local-first · built for freelancers</p>
 </div>
+
+<AccountSheet open={accountOpen} onclose={() => (accountOpen = false)} />
 
 <style>
   .sec { padding: 16px; margin-bottom: 12px; }
@@ -264,6 +300,9 @@
   .switch:checked::after { transform: translateX(18px); }
 
   .exp-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  .acc-line { font-weight: 650; font-size: 15px; margin: 0 0 4px; }
+  .acc-status { font-size: 13.5px; color: var(--text-2); margin: 0 0 14px; }
+  .acc-err { color: var(--danger); }
   .cloud-info, .cloud-status, .cloud-msg { font-size: 13.5px; color: var(--text-2); margin: 0 0 14px; }
   .cloud-msg { margin: 12px 0 0; }
   .cloud-status.err { color: var(--danger); }

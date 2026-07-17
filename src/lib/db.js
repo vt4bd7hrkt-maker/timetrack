@@ -6,7 +6,7 @@
  * tombstones without schema changes.
  */
 const DB_NAME = 'timetrack';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // v2: adds 'meta' (sync watermarks & flags)
 
 let dbPromise = null;
 
@@ -29,6 +29,9 @@ function open() {
       }
       if (!db.objectStoreNames.contains('settings')) {
         db.createObjectStore('settings', { keyPath: 'key' });
+      }
+      if (!db.objectStoreNames.contains('meta')) {
+        db.createObjectStore('meta', { keyPath: 'key' });
       }
     };
     req.onsuccess = () => resolve(req.result);
@@ -68,3 +71,17 @@ export const bulkPut = (store, values) =>
   tx(store, 'readwrite', (s) => {
     values.forEach((v) => s.put(v));
   });
+
+/* --- tiny key/value helpers on the 'meta' store (sync watermarks etc.) --- */
+
+export const getMeta = (key) =>
+  open().then(
+    (db) =>
+      new Promise((resolve, reject) => {
+        const req = db.transaction('meta').objectStore('meta').get(key);
+        req.onsuccess = () => resolve(req.result ? req.result.value : undefined);
+        req.onerror = () => reject(req.error);
+      })
+  );
+
+export const setMeta = (key, value) => put('meta', { key, value });

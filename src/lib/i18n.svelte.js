@@ -57,7 +57,23 @@ const dict = {
     yesterday: 'Yesterday', last7Days: 'Last 7 days', prevWeek: 'Previous week',
     last30Days: 'Last 30 days', prevMonth: 'Previous month', last90Days: 'Last 90 days', prevYear: 'Previous year',
     breaks: 'Breaks', addBreak: 'Add break', breakLabel: 'Break',
-    breakInvalid: 'Breaks must lie inside the entry and end after they start'
+    breakInvalid: 'Breaks must lie inside the entry and end after they start',
+    account: 'Account',
+    accountInfo: 'Sign in to sync your projects and tracked time across all your devices — automatically and in the background.',
+    signIn: 'Sign in', signOut: 'Sign out', createAccount: 'Create account',
+    signOutConfirm: 'Sign out? Your data stays on this device and keeps working offline.',
+    email: 'E-mail', password: 'Password', newPassword: 'New password',
+    setNewPassword: 'Set a new password', sendResetLink: 'Send reset link', forgotPassword: 'Forgot password',
+    confirmEmailSent: 'Almost there — confirm your address via the e-mail we just sent, then sign in.',
+    resetEmailSent: 'Check your inbox — we sent you a link to reset your password.',
+    pwUpdated: 'Password updated. You are signed in.',
+    haveAccount: 'I already have an account', noAccount: 'Create a new account',
+    continueWithGoogle: 'Continue with Google', continueWithApple: 'Continue with Apple',
+    syncing: 'Syncing…', syncOffline: 'Offline — changes sync when you are back online',
+    syncError: 'Sync problem', syncedAt: 'Synced',
+    importLocalTitle: 'Import your local data?',
+    importLocalText: 'This device holds {p} projects and {e} time entries that are not in your account yet. Import them now? History, IDs and timestamps are preserved.',
+    importLocalYes: 'Import into my account', importLocalNo: 'No, keep them only on this device'
   },
   de: {
     home: 'Home', projects: 'Projekte', stats: 'Statistik', calendar: 'Kalender', settings: 'Einstellungen',
@@ -110,7 +126,23 @@ const dict = {
     yesterday: 'Gestern', last7Days: 'Letzte 7 Tage', prevWeek: 'Vorwoche',
     last30Days: 'Letzte 30 Tage', prevMonth: 'Vormonat', last90Days: 'Letzte 90 Tage', prevYear: 'Vorjahr',
     breaks: 'Pausen', addBreak: 'Pause hinzufügen', breakLabel: 'Pause',
-    breakInvalid: 'Pausen müssen innerhalb des Eintrags liegen und nach ihrem Start enden'
+    breakInvalid: 'Pausen müssen innerhalb des Eintrags liegen und nach ihrem Start enden',
+    account: 'Konto',
+    accountInfo: 'Melde dich an, um Projekte und erfasste Zeiten automatisch im Hintergrund auf allen Geräten zu synchronisieren.',
+    signIn: 'Anmelden', signOut: 'Abmelden', createAccount: 'Konto erstellen',
+    signOutConfirm: 'Abmelden? Deine Daten bleiben auf diesem Gerät und funktionieren weiter offline.',
+    email: 'E-Mail', password: 'Passwort', newPassword: 'Neues Passwort',
+    setNewPassword: 'Neues Passwort festlegen', sendResetLink: 'Link zum Zurücksetzen senden', forgotPassword: 'Passwort vergessen',
+    confirmEmailSent: 'Fast geschafft — bestätige deine Adresse über die soeben gesendete E-Mail und melde dich dann an.',
+    resetEmailSent: 'Schau in dein Postfach — wir haben dir einen Link zum Zurücksetzen geschickt.',
+    pwUpdated: 'Passwort aktualisiert. Du bist angemeldet.',
+    haveAccount: 'Ich habe bereits ein Konto', noAccount: 'Neues Konto erstellen',
+    continueWithGoogle: 'Mit Google fortfahren', continueWithApple: 'Mit Apple fortfahren',
+    syncing: 'Synchronisiert…', syncOffline: 'Offline — Änderungen werden synchronisiert, sobald du online bist',
+    syncError: 'Sync-Problem', syncedAt: 'Synchronisiert',
+    importLocalTitle: 'Lokale Daten importieren?',
+    importLocalText: 'Auf diesem Gerät liegen {p} Projekte und {e} Zeiteinträge, die noch nicht in deinem Konto sind. Jetzt importieren? Historie, IDs und Zeitstempel bleiben erhalten.',
+    importLocalYes: 'In mein Konto importieren', importLocalNo: 'Nein, nur auf diesem Gerät behalten'
   }
 };
 
