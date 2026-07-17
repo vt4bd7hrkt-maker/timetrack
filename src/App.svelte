@@ -4,7 +4,9 @@
   import { initCloudBackup } from './lib/cloudbackup.svelte.js';
   import { initAuth, auth } from './lib/cloud/auth.svelte';
   import { initSync } from './lib/cloud/sync.svelte';
+  import { cloudConfigured } from './lib/cloud/supabase';
   import { route } from './lib/router.svelte.js';
+  import Welcome from './views/Welcome.svelte';
   import AccountSheet from './components/AccountSheet.svelte';
   import ImportOfferSheet from './components/ImportOfferSheet.svelte';
   import TabBar from './components/TabBar.svelte';
@@ -24,9 +26,25 @@
   $effect(() => {
     document.documentElement.dataset.theme = settings.theme || 'system';
   });
+
+  /* Brand-new visitors (cloud on, signed out, empty device) land on the
+     sign-up screen; everyone else goes straight into the app. */
+  let welcomeSkipped = $state(
+    typeof localStorage !== 'undefined' && localStorage.getItem('tt.welcomeSkipped') === '1'
+  );
+  const showWelcome = $derived(
+    cloudConfigured && auth.ready && !auth.user && !auth.recovery &&
+    data.projects.length === 0 && data.entries.length === 0 && !welcomeSkipped
+  );
+  function skipWelcome() {
+    localStorage.setItem('tt.welcomeSkipped', '1');
+    welcomeSkipped = true;
+  }
 </script>
 
-{#if data.ready}
+{#if data.ready && showWelcome}
+  <Welcome onskip={skipWelcome} />
+{:else if data.ready}
   <main>
     {#if route.name === 'home'}
       <Home />

@@ -5,9 +5,18 @@
   import { oauthProviders } from '../lib/cloud/supabase';
   import { t } from '../lib/i18n.svelte.js';
 
-  let { open = false, onclose }: { open?: boolean; onclose?: () => void } = $props();
+  let {
+    open = false,
+    onclose,
+    initialMode = 'signin'
+  }: { open?: boolean; onclose?: () => void; initialMode?: 'signin' | 'signup' } = $props();
 
   let mode = $state<'signin' | 'signup' | 'forgot'>('signin');
+
+  // the welcome screen opens this sheet directly in sign-up mode
+  $effect(() => {
+    if (open) mode = initialMode;
+  });
   let email = $state('');
   let password = $state('');
   let busy = $state(false);
