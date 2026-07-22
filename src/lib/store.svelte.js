@@ -37,6 +37,17 @@ setInterval(() => (clock.now = Date.now()), 1000);
 const uid = () =>
   crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+/**
+ * Deep-plain copy for IndexedDB. Records held in `data`/`settings` are Svelte
+ * $state proxies; nested arrays/objects (e.g. an entry's `breaks`) stay proxies
+ * across a shallow `{...spread}` and IndexedDB refuses to structured-clone them
+ * (DataCloneError). Snapshotting right before every write makes all persistence
+ * proxy-safe in one place.
+ */
+const plain = (v) => $state.snapshot(v);
+const put = (store, value) => db.put(store, plain(value));
+const bulkPut = (store, values) => db.bulkPut(store, values.map(plain));
+
 /* ------------------------------- init ---------------------------------- */
 
 export async function init() {
@@ -55,7 +66,7 @@ export async function init() {
 
 export async function saveSetting(key, value) {
   settings[key] = value;
-  await db.put('settings', { key, value, updatedAt: Date.now() });
+  await put('settings', { key, value, updatedAt: Date.now() });
 }
 
 /* ----------------------------- projects -------------------------------- */
@@ -79,7 +90,7 @@ export async function saveProject(input) {
         updatedAt: nowTs,
         ...input
       };
-  await db.put('projects', p);
+  await put('projects', p);
   const i = data.projects.findIndex((x) => x.id === p.id);
   if (i >= 0) data.projects[i] = p;
   else data.projects.push(p);
@@ -109,11 +120,11 @@ export async function deleteProject(projectId, { deleteEntries = true } = {}) {
   } else {
     await stopTimer(projectId).catch(() => {});
   }
-  await db.put('projects', { ...p, deleted: true, updatedAt: Date.now() }); // tombstone for sync
+  await put('projects', { ...p, deleted: true, updatedAt: Date.now() }); // tombstone for sync
   data.projects = data.projects.filter((x) => x.id !== projectId);
   if (deleteEntries) {
     const dead = data.entries.filter((e) => e.projectId === projectId);
-    for (const e of dead) await db.put('entries', { ...e, deleted: true, updatedAt: Date.now() });
+    for (const e of dead) await put('entries', { ...e, deleted: true, updatedAt: Date.now() });
     data.entries = data.entries.filter((e) => e.projectId !== projectId);
   }
 }
@@ -123,7 +134,7 @@ export async function deleteProject(projectId, { deleteEntries = true } = {}) {
 export async function startTimer(projectId, startedAt = Date.now()) {
   if (data.timers.some((t) => t.projectId === projectId)) return;
   const t = { projectId, startedAt };
-  await db.put('timers', t);
+  await put('timers', t);
   data.timers.push(t);
 }
 
@@ -145,14 +156,14 @@ export const isRunning = (projectId) => data.timers.some((t) => t.projectId === 
 export async function addEntry({ projectId, start, end, note = '', breaks = [] }) {
   const nowTs = Date.now();
   const e = { id: uid(), projectId, start, end, note, breaks, deleted: false, createdAt: nowTs, updatedAt: nowTs };
-  await db.put('entries', e);
+  await put('entries', e);
   data.entries.push(e);
   return e;
 }
 
 export async function updateEntry(entry) {
   const e = { ...entry, updatedAt: Date.now() };
-  await db.put('entries', e);
+  await put('entries', e);
   const i = data.entries.findIndex((x) => x.id === e.id);
   if (i >= 0) data.entries[i] = e;
 }
@@ -160,7 +171,7 @@ export async function updateEntry(entry) {
 export async function deleteEntry(id) {
   const e = data.entries.find((x) => x.id === id);
   if (!e) return;
-  await db.put('entries', { ...e, deleted: true, updatedAt: Date.now() });
+  await put('entries', { ...e, deleted: true, updatedAt: Date.now() });
   data.entries = data.entries.filter((x) => x.id !== id);
 }
 
@@ -204,7 +215,7 @@ export async function importBackup(json) {
       const existing = byId.get(item.id);
       if (!existing || (item.updatedAt || 0) > (existing.updatedAt || 0)) byId.set(item.id, item);
     }
-    await db.bulkPut(storeName, [...byId.values()]);
+    await bulkPut(storeName, [...byId.values()]);
     data[key] = [...byId.values()].filter((x) => !x.deleted);
   };
   await merge('projects', parsed.projects, 'projects');
@@ -232,7 +243,7 @@ export async function applyRemote(kind, records) {
     }
   }
   if (!winners.length) return;
-  await db.bulkPut(storeName, winners);
+  await bulkPut(storeName, winners);
   data[kind === 'projects' ? 'projects' : 'entries'] = [...byId.values()].filter((x) => !x.deleted);
 }
 
@@ -241,7 +252,7 @@ export async function applyRemoteTimers(list) {
   const local = await db.all('timers');
   const incoming = new Map(list.map((t) => [t.projectId, t]));
   for (const t of local) if (!incoming.has(t.projectId)) await db.del('timers', t.projectId);
-  for (const t of list) await db.put('timers', t);
+  for (const t of list) await put('timers', t);
   data.timers = list;
 }
 
@@ -252,7 +263,7 @@ export async function applyRemoteSettings(records) {
   for (const r of records) {
     const cur = byKey.get(r.key);
     if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) {
-      await db.put('settings', r);
+      await put('settings', r);
       settings[r.key] = r.value;
     }
   }
