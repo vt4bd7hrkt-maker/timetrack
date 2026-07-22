@@ -1,0 +1,7 @@
+# Security headers, applied automatically on Cloudflare Pages / Netlify.
+# (GitHub Pages ignores this file — it simply deploys as a static asset.)
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
