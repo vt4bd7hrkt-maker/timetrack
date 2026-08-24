@@ -3,7 +3,7 @@
    * Home — the heart of the app. Big tappable project cards, one tap to
    * start/stop, long press for the action sheet.
    */
-  import { data, clock, setArchived } from '../lib/store.svelte.js';
+  import { data, clock, setArchived, settings, saveSetting } from '../lib/store.svelte.js';
   import { go } from '../lib/router.svelte.js';
   import { startOfDay, endOfDay, overlapMs, workedOverlapMs, entryMs, fmtHours, HOUR } from '../lib/time.js';
   import { t } from '../lib/i18n.svelte.js';
@@ -17,15 +17,98 @@
   let sheet = $state(null); // 'menu' | 'addTime' | 'forgot' | 'edit' | 'new' | 'delete'
   let menuProject = $state(null);
 
-  const active = $derived(
-    data.projects
-      .filter((p) => !p.archived && p.status !== 'completed')
-      .sort((a, b) => {
-        const ar = data.timers.some((tm) => tm.projectId === a.id) ? 1 : 0;
-        const br = data.timers.some((tm) => tm.projectId === b.id) ? 1 : 0;
-        return br - ar || (b.updatedAt || 0) - (a.updatedAt || 0);
-      })
-  );
+  /**
+   * Cards keep their place — the order is the user's own, changed only by
+   * dragging. Projects not in the saved order yet (freshly created, or synced
+   * from another device) come first, newest first, so they can't hide.
+   */
+  const active = $derived.by(() => {
+    const visible = data.projects.filter((p) => !p.archived && p.status !== 'completed');
+    const rank = new Map((settings.projectOrder || []).map((id, i) => [id, i]));
+    const known = [];
+    const fresh = [];
+    for (const p of visible) (rank.has(p.id) ? known : fresh).push(p);
+    known.sort((a, b) => rank.get(a.id) - rank.get(b.id));
+    fresh.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    return [...fresh, ...known];
+  });
+
+  /* ------------------------- drag & drop reordering -------------------------
+     Nothing moves on its own. Hold a card to pick it up, drag, release.
+     While dragging, the other cards slide by exactly the height the lifted
+     card frees up (its own height + the gap), which is correct no matter how
+     tall the individual cards are. */
+
+  let slotEls = $state([]);
+  let dragIndex = $state(-1); // card being dragged
+  let dragTo = $state(-1); // slot it would land in
+  let dragOffset = $state(0); // px the finger has moved
+  let geom = null; // measured layout, captured at pickup
+  let dragIds = []; // list snapshot, to detect changes mid-drag
+
+  function pickup(i) {
+    const els = slotEls.slice(0, active.length);
+    if (els.length !== active.length || els.some((el) => !el?.isConnected)) return;
+    const rects = els.map((el) => el.getBoundingClientRect());
+    geom = { rects, gap: rects.length > 1 ? rects[1].top - rects[0].bottom : 12 };
+    dragIds = active.map((p) => p.id);
+    dragIndex = i;
+    dragTo = i;
+    dragOffset = 0;
+  }
+
+  function dragMove(dy) {
+    if (dragIndex < 0 || !geom) return;
+    dragOffset = dy;
+    const { rects } = geom;
+    const center = rects[dragIndex].top + rects[dragIndex].height / 2 + dy;
+    let to = dragIndex;
+    for (let i = 0; i < rects.length; i++) {
+      if (i === dragIndex) continue;
+      const c = rects[i].top + rects[i].height / 2;
+      if (i > dragIndex && center > c) to = Math.max(to, i);
+      if (i < dragIndex && center < c) to = Math.min(to, i);
+    }
+    dragTo = to;
+  }
+
+  /** How far a non-dragged card has to move out of the way. */
+  function shiftFor(i) {
+    if (dragIndex < 0 || !geom || i === dragIndex) return 0;
+    const h = geom.rects[dragIndex].height + geom.gap;
+    if (dragTo > dragIndex && i > dragIndex && i <= dragTo) return -h;
+    if (dragTo < dragIndex && i >= dragTo && i < dragIndex) return h;
+    return 0;
+  }
+
+  function endDrag(moved) {
+    const from = dragIndex;
+    const to = dragTo;
+    const ids = dragIds;
+    // Always land in a clean state: no transforms survive a drop, whatever
+    // happened in between (cancelled gesture, list changed, app backgrounded).
+    dragIndex = -1;
+    dragTo = -1;
+    dragOffset = 0;
+    geom = null;
+    dragIds = [];
+    if (!moved || from < 0 || to === from) return;
+
+    // the list must not have changed underneath us (e.g. a sync landing)
+    const now = active.map((p) => p.id);
+    if (now.length !== ids.length || now.some((id, i) => id !== ids[i])) return;
+
+    const next = [...ids];
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    // keep ids we don't show here (archived / completed) in the stored order
+    const rest = (settings.projectOrder || []).filter((id) => !next.includes(id));
+    saveSetting('projectOrder', [...next, ...rest]);
+  }
+
+  function slotStyle(i) {
+    if (dragIndex < 0) return '';
+    return `transform: translateY(${i === dragIndex ? dragOffset : shiftFor(i)}px)`;
+  }
 
   /* --- dashboard widgets --- */
   const dayStart = $derived(startOfDay(clock.now));
@@ -80,8 +163,23 @@
       <button class="restore-link" onclick={() => go('settings')}>{t('restoreFromBackup')}</button>
     {/if}
   {:else}
-    {#each active as p (p.id)}
-      <ProjectCard project={p} onmenu={openMenu} />
+    {#each active as p, i (p.id)}
+      <div
+        class="slot"
+        class:dragging={dragIndex === i}
+        class:gliding={dragIndex >= 0 && dragIndex !== i}
+        bind:this={slotEls[i]}
+        style={slotStyle(i)}
+      >
+        <ProjectCard
+          project={p}
+          lifted={dragIndex === i}
+          onmenu={openMenu}
+          onpickup={() => pickup(i)}
+          ondragmove={dragMove}
+          ondrop={endDrag}
+        />
+      </div>
     {/each}
   {/if}
 
@@ -150,6 +248,15 @@
   /* h:mm:ss must fit a third of a small phone screen */
   .big { font-size: clamp(14px, 4.4vw, 21px); font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; }
   .big.lit { color: var(--accent); }
+
+  /* one card's place in the list; the transform is what moves it */
+  .slot { position: relative; }
+  .slot.gliding { transition: transform 0.22s var(--ease); }
+  .slot.dragging { z-index: 30; } /* dragged card rides above the rest */
+
+  @media (prefers-reduced-motion: reduce) {
+    .slot.gliding { transition-duration: 0.01s; }
+  }
 
   .fab {
     position: fixed;

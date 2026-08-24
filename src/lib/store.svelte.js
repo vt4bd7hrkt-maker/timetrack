@@ -27,7 +27,9 @@ export const settings = $state({
   theme: 'system',
   language: 'en',
   dailyGoal: 8,
-  reminders: false
+  reminders: false,
+  /** Home-screen card order, newest-first for ids not listed yet. Synced. */
+  projectOrder: []
 });
 
 /** Ticks every second — drives live timer displays. */

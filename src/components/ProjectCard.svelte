@@ -1,17 +1,20 @@
 <script>
   /**
    * The one-tap tracking card.
-   * Tap        -> start / stop the project's timer.
-   * Long press -> parent opens the action sheet via the onmenu callback.
+   * Tap                 -> start / stop the project's timer.
+   * Hold                -> card lifts; release opens the action sheet,
+   *                        dragging reorders the list (handled by the parent).
    */
   import { data, clock, startTimer, stopTimer, trackedMs, isRunning } from '../lib/store.svelte.js';
-  import { longpress } from '../lib/longpress.js';
+  import { holdDrag } from '../lib/holddrag.js';
   import { fmtClock, fmtHM, HOUR, startOfDay, endOfDay, overlapMs, workedOverlapMs } from '../lib/time.js';
   import { t } from '../lib/i18n.svelte.js';
   import { go } from '../lib/router.svelte.js';
 
-  /** @type {{ project: any, onmenu?: (project: any) => void }} */
-  let { project, onmenu } = $props();
+  /** @type {{ project: any, onmenu?: (p: any) => void, onpickup?: () => void,
+   *           ondragmove?: (dy: number) => void, ondrop?: (moved: boolean) => void,
+   *           lifted?: boolean }} */
+  let { project, onmenu, onpickup, ondragmove, ondrop, lifted = false } = $props();
 
   const running = $derived(isRunning(project.id));
   const timer = $derived(data.timers.find((x) => x.projectId === project.id));
@@ -43,8 +46,14 @@
   class="card pcard"
   class:running
   class:dim={!tappable}
+  class:lifted
   style="--pcolor: {project.color || 'var(--accent)'}"
-  use:longpress={() => onmenu?.(project)}
+  use:holdDrag={{
+    onpickup,
+    onmove: ondragmove,
+    ondrop,
+    onmenu: () => onmenu?.(project)
+  }}
   onclick={toggle}
   onkeydown={(e) => e.key === 'Enter' && toggle()}
   role="button"
@@ -96,6 +105,13 @@
   }
   .pcard:active { transform: scale(0.98); }
   .pcard.dim { opacity: 0.55; }
+
+  /* picked up for dragging — must beat :active, so it comes after it */
+  .pcard.lifted {
+    transform: scale(1.03);
+    box-shadow: var(--shadow-lg);
+    cursor: grabbing;
+  }
 
   .pcard.running {
     border-color: var(--accent);

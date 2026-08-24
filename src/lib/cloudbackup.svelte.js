@@ -56,7 +56,8 @@ function fingerprint() {
   for (const e of data.entries) if ((e.updatedAt || 0) > m) m = e.updatedAt;
   return [
     data.projects.length, data.entries.length, m,
-    settings.theme, settings.language, settings.dailyGoal, settings.reminders
+    settings.theme, settings.language, settings.dailyGoal, settings.reminders,
+    (settings.projectOrder || []).join(',')
   ].join(':');
 }
 
