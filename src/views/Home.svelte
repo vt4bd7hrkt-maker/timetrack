@@ -29,7 +29,12 @@
     const fresh = [];
     for (const p of visible) (rank.has(p.id) ? known : fresh).push(p);
     known.sort((a, b) => rank.get(a.id) - rank.get(b.id));
-    fresh.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    // tiebreak by id: several projects can share a createdAt (bulk import),
+    // and without it their order would follow the database's array order,
+    // which reshuffles on every sync — that made cards jump.
+    fresh.sort(
+      (a, b) => (b.createdAt || 0) - (a.createdAt || 0) || (a.id < b.id ? -1 : 1)
+    );
     return [...fresh, ...known];
   });
 

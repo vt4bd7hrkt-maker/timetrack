@@ -75,6 +75,7 @@ export async function saveSetting(key, value) {
 
 export async function saveProject(input) {
   const nowTs = Date.now();
+  const isNew = !input.id;
   const p = input.id
     ? { ...input, updatedAt: nowTs }
     : {
@@ -96,6 +97,12 @@ export async function saveProject(input) {
   const i = data.projects.findIndex((x) => x.id === p.id);
   if (i >= 0) data.projects[i] = p;
   else data.projects.push(p);
+  // Keep the home-screen order complete: a project that is missing from it
+  // would have to be placed by a fallback rule instead of by the user.
+  if (isNew) {
+    const order = (settings.projectOrder || []).filter((id) => id !== p.id);
+    await saveSetting('projectOrder', [p.id, ...order]);
+  }
   return p;
 }
 
